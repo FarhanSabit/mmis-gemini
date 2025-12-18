@@ -44,27 +44,53 @@ module.exports = mod;
 "[project]/src/services/auth.service.ts [middleware] (ecmascript)", ((__turbopack_context__) => {
 "use strict";
 
-// Server-side Data Access Layer (DAL)to ensure that database logic and sensitive credentials never leak into Client Components: src/services/auth.service.ts
+// src/services/auth.service.ts
 __turbopack_context__.s([
     "getSession",
     ()=>getSession
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$0$2e$10_$40$babel$2b$core$40$7$2e$_59b2c4e49353e66c503ff99109bd4451$2f$node_modules$2f$next$2f$dist$2f$compiled$2f$server$2d$only$2f$empty$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/.pnpm/next@16.0.10_@babel+core@7._59b2c4e49353e66c503ff99109bd4451/node_modules/next/dist/compiled/server-only/empty.js [middleware] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$0$2e$10_$40$babel$2b$core$40$7$2e$_59b2c4e49353e66c503ff99109bd4451$2f$node_modules$2f$next$2f$headers$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/.pnpm/next@16.0.10_@babel+core@7._59b2c4e49353e66c503ff99109bd4451/node_modules/next/headers.js [middleware] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$0$2e$10_$40$babel$2b$core$40$7$2e$_59b2c4e49353e66c503ff99109bd4451$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/.pnpm/next@16.0.10_@babel+core@7._59b2c4e49353e66c503ff99109bd4451/node_modules/next/dist/server/route-modules/app-page/vendored/rsc/react.js [middleware] (ecmascript)");
 ;
 ;
+;
 async function getSession() {
-    const token = (await __turbopack_context__.A("[project]/node_modules/.pnpm/next@16.0.10_@babel+core@7._59b2c4e49353e66c503ff99109bd4451/node_modules/next/headers.js [middleware] (ecmascript, async loader)")).cookies().get('auth_token')?.value;
-    if (!token) return null;
-    // Taint the token so it cannot be passed to a Client Component
-    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$0$2e$10_$40$babel$2b$core$40$7$2e$_59b2c4e49353e66c503ff99109bd4451$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["experimental_taintUniqueValue"])('Do not pass raw session tokens to the client.', token, token);
-    const res = await fetch(`${process.env.BACKEND_API_URL}/api/auth/me`, {
-        headers: {
-            Authorization: `Bearer ${token}`
+    try {
+        // 1. Await the asynchronous cookie store (Next.js 16 requirement)
+        const cookieStore = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$0$2e$10_$40$babel$2b$core$40$7$2e$_59b2c4e49353e66c503ff99109bd4451$2f$node_modules$2f$next$2f$headers$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["cookies"])();
+        const token = cookieStore.get('auth_token')?.value;
+        if (!token) return null;
+        /**
+     * Security Tainting: 
+     * Prevents the raw JWT from being accidentally passed to a Client Component props.
+     */ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$0$2e$10_$40$babel$2b$core$40$7$2e$_59b2c4e49353e66c503ff99109bd4451$2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["experimental_taintUniqueValue"])('Do not pass raw session tokens to the client.', // token,
+        {
+            token
+        }, token);
+        // 2. Internal fetch to the Express Backend (BFF)
+        const res = await fetch(`${process.env.BACKEND_API_URL}/api/auth/me`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            // Using next: { revalidate: 0 } ensures we get fresh data every time
+            next: {
+                revalidate: 0
+            }
+        });
+        if (!res.ok) {
+            // If the backend says the token is invalid, the session is null
+            return null;
         }
-    });
-    if (!res.ok) return null;
-    return res.json();
+        const sessionData = await res.json();
+        // 3. Return the user object (e.g., id, email, role, kycStatus, adminStatus)
+        return sessionData;
+    } catch (error) {
+        console.error("Auth Service: Error fetching session", error);
+        return null;
+    }
 }
 }),
 "[project]/src/proxy.ts [middleware] (ecmascript)", ((__turbopack_context__) => {
@@ -116,7 +142,7 @@ async function proxy(req) {
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f2e$pnpm$2f$next$40$16$2e$0$2e$10_$40$babel$2b$core$40$7$2e$_59b2c4e49353e66c503ff99109bd4451$2f$node_modules$2f$next$2f$server$2e$js__$5b$middleware$5d$__$28$ecmascript$29$__["NextResponse"].next();
     }
     // 2. Session Integrity Check
-    const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$auth$2e$service$2e$ts__$5b$middleware$5d$__$28$ecmascript$29$__["getSession"])(req);
+    const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$auth$2e$service$2e$ts__$5b$middleware$5d$__$28$ecmascript$29$__["getSession"])();
     if (!session) {
         const loginUrl = new URL('/login', req.url);
         loginUrl.searchParams.set('from', pathname);
