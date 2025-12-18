@@ -1,11 +1,8 @@
-// The proxy.ts Interceptor (Next.js 16) replaces the legacy middleware.ts & runs on the Node.js runtime: src/proxy.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/services/auth.service';
 
 /**
- * Centralized Audit Log Utility
- * Logs sensitive routing events or administrative overrides to the Backend.
+ * Audit Log Utility: Records sensitive routing events to the Backend.
  */
 async function logAction(userId: string, action: string, metadata: object, ip: string) {
   try {
@@ -15,13 +12,7 @@ async function logAction(userId: string, action: string, metadata: object, ip: s
         'Content-Type': 'application/json',
         'x-internal-secret': process.env.INTERNAL_AUTH_KEY || '' 
       },
-      body: JSON.stringify({
-        userId,
-        action,
-        timestamp: new Date().toISOString(),
-        ipAddress: ip,
-        details: metadata,
-      }),
+      body: JSON.stringify({ userId, action, timestamp: new Date().toISOString(), ipAddress: ip, details: metadata }),
     });
   } catch (error) {
     console.error("Audit Logging Failed:", error);
@@ -32,25 +23,21 @@ export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ip = req.headers.get('x-forwarded-for') || '0.0.0.0';
 
-  // 1. Public Routes Bypass
-  // These routes do not require a session
+  // 1. Skip Public Assets and Authentication Routes
   const publicRoutes = ['/login', '/signup', '/', '/verify-email'];
-  if (publicRoutes.some(route => pathname === route) || pathname.startsWith('/_next')) {
+  if (publicRoutes.includes(pathname) || pathname.startsWith('/_next')) {
     return NextResponse.next();
   }
 
-  // 2. Session Validation
+  // 2. Session Integrity Check
   const session = await getSession(req);
-
-  // Redirect to login if no session/token exists
   if (!session) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // 3. Super Admin Enforcement
-  // Super Admins must stay within /super-admin and bypass other checks
+  // 3. Super Admin Fast-Path
   if (session.role === 'SUPER_ADMIN') {
     if (!pathname.startsWith('/super-admin')) {
       return NextResponse.redirect(new URL('/super-admin', req.url));
@@ -58,45 +45,40 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 4. Portal Protection (Vendors & Market Admins)
+  // 4. Status Evaluation
   const isApprovedVendor = session.role === 'VENDOR' && session.kycStatus === 'VERIFIED';
   const isApprovedAdmin = session.role === 'MARKET_ADMIN' && session.adminStatus === 'APPROVED';
+  
+  // A user is considered "In Onboarding" if they aren't fully verified yet
+  const needsOnboarding = !isApprovedVendor && !isApprovedAdmin;
 
-  // Vendor Portal Protection
-  if (pathname.startsWith('/vendor')) {
-    if (!isApprovedVendor) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
+  // 5. Routing Guardrails
+
+  // A. Force Onboarding: Non-verified users must go to /apply-access
+  if (needsOnboarding && pathname !== '/apply-access') {
+    return NextResponse.redirect(new URL('/apply-access', req.url));
   }
 
-  // Market Admin Portal Protection
-  if (pathname.startsWith('/market-admin')) {
-    if (!isApprovedAdmin) {
-      await logAction(session.id, "UNAUTHORIZED_ADMIN_ACCESS_ATTEMPT", { pathname }, ip);
-      return NextResponse.redirect(new URL('/dashboard', req.url));
-    }
+  // B. Prevent Looping: Approved users shouldn't see onboarding page
+  if (!needsOnboarding && pathname === '/apply-access') {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  // 5. General User Catch-all
-  // If a user has no approved role but tries to access role-specific portals
-  const restrictedPortals = ['/vendor', '/market-admin', '/super-admin'];
-  if (restrictedPortals.some(portal => pathname.startsWith(portal))) {
-     return NextResponse.redirect(new URL('/dashboard', req.url));
+  // C. Portal Protection: Explicitly block cross-role access to /dashboard
+  // (Assuming /dashboard is the shared entry point for approved Market/Vendor roles)
+  if (pathname === '/dashboard' && needsOnboarding) {
+    return NextResponse.redirect(new URL('/apply-access', req.url));
+  }
+
+  // D. Admin-Specific Portal Protection (if you have sub-routes like /market-admin/settings)
+  if (pathname.startsWith('/market-admin') && !isApprovedAdmin) {
+    await logAction(session.id, "UNAUTHORIZED_ADMIN_ACCESS_ATTEMPT", { pathname }, ip);
+    return NextResponse.redirect(new URL('/apply-access', req.url));
   }
 
   return NextResponse.next();
 }
 
-// Config to specify which paths this proxy should run on
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
