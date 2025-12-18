@@ -21,8 +21,7 @@ export async function getSession() {
      */
  experimental_taintUniqueValue(
   'Do not pass raw session tokens to the client.',
-  // token,
-  { token },
+  process.env.NODE_ENV === 'development' ? '[DEV] Token' : '[PROD] Token',
   token
 );
 

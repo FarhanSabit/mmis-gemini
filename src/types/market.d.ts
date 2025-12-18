@@ -1,6 +1,6 @@
 // Market Infrastructure Model (src/types/market.d.ts)
 
-export type StallStatus = 'VACANT' | 'OCCUPIED' | 'MAINTENANCE' | 'UNDER_REVIEV';
+export type StallStatus = 'VACANT' | 'OCCUPIED' | 'MAINTENANCE' | 'UNDER_REVIEW';
 
 export interface MarketStall {
   id: string;
