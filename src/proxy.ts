@@ -30,7 +30,7 @@ export default async function proxy(req: NextRequest) {
   }
 
   // 2. Session Integrity Check
-  const session = await getSession(req);
+  const session = await getSession();
   if (!session) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('from', pathname);
