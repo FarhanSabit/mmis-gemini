@@ -1,21 +1,53 @@
-import * as React from "react"
 
-import { cn } from "@/lib/utils"
+import React from 'react';
+import { LucideIcon } from 'lucide-react';
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
-  return (
-    <input
-      type={type}
-      data-slot="input"
-      className={cn(
-        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
-        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-        className
-      )}
-      {...props}
-    />
-  )
+interface InputProps {
+  label?: string;
+  name?: string;
+  type?: string;
+  placeholder?: string;
+  icon?: LucideIcon;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  disabled?: boolean;
+  multiline?: boolean;
+  required?: boolean;
+  className?: string;
 }
 
-export { Input }
+export const Input = ({ label, name, type = 'text', placeholder, icon: Icon, value, onChange, disabled, multiline, required, className = '' }: InputProps) => (
+  <div className={`mb-4 ${className}`}>
+    {label && (
+      <label className="block text-sm font-black text-slate-800 uppercase tracking-widest mb-2 px-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+    )}
+    <div className="relative group">
+      {Icon && <Icon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 z-10 transition-colors group-focus-within:text-indigo-400" />}
+      {multiline ? (
+        <textarea
+          name={name}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          placeholder={placeholder}
+          required={required}
+          rows={4}
+          className={`w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 py-4 bg-black text-white border-2 border-slate-800 rounded-2xl focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all outline-none placeholder:text-slate-500 text-sm font-bold disabled:opacity-50 resize-none shadow-xl`}
+        />
+      ) : (
+        <input
+          name={name}
+          type={type}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          placeholder={placeholder}
+          required={required}
+          className={`w-full ${Icon ? 'pl-12' : 'pl-4'} pr-4 py-4 bg-black text-white border-2 border-slate-800 rounded-2xl focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all outline-none placeholder:text-slate-500 text-sm font-bold disabled:opacity-50 shadow-xl`}
+        />
+      )}
+    </div>
+  </div>
+);
