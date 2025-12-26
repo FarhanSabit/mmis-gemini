@@ -7,8 +7,8 @@ import {
   ResponsiveContainer, AreaChart, Area, Cell, PieChart as RePieChart, Pie
 } from 'recharts';
 import { UserProfile } from '../../types';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
+import { Card } from '../ui/card';
+import { Button } from '../ui/button';
 import { PaymentGateway } from '../payments/PaymentGateway';
 
 export const Home = ({ user }: { user: UserProfile }) => {
@@ -17,21 +17,8 @@ export const Home = ({ user }: { user: UserProfile }) => {
   const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
-    const fetchInsights = async () => {
-      setLoadingInsights(true);
-      try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: `Provide a professional 2-sentence market trend analysis for a user with the role ${user.role} in a multi-vendor ecommerce system. Focus on BI and performance.`,
-        });
-        setInsights(response.text || 'Welcome back! Performance metrics show a steady upward trend in regional hubs.');
-      } catch (e) {
-        setInsights('Welcome back! Market analytics indicate stability in core commercial sectors.');
-      }
-      setLoadingInsights(false);
-    };
-    fetchInsights();
+    // TODO: AI insights temporarily disabled - requires server-side API route
+    setInsights('Welcome back! Market analytics indicate stability in core commercial sectors.');
   }, [user.role]);
 
   // BI Data Mock

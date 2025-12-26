@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, User, Sparkles, MapPin, ExternalLink, Info } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 
 interface Message {
   role: 'assistant' | 'user';
@@ -35,40 +35,15 @@ export const Chatbot = () => {
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setIsTyping(true);
 
+    // TODO: AI features temporarily disabled - requires server-side API route
+    // See CODEBASE_REVIEW.md for implementation details
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Simulated response for testing
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Heuristic to check if this is a location/map query
-      const isLocationQuery = /map|where|location|address|find|market|city|get to|directions/i.test(userMsg);
-      
-      const modelName = isLocationQuery ? 'gemini-2.5-flash' : 'gemini-3-pro-preview';
-      const config: any = isLocationQuery 
-        ? { tools: [{ googleMaps: {} }] } 
-        : { systemInstruction: "You are MMIS Assistant. Professional, concise, helpful." };
-
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: `The user is interacting with MMIS (Multi-Vendor E-commerce Management System). Provide helpful, professional, and short support answers. User query: ${userMsg}`,
-        config: config
-      });
-      
-      let mapsLinks: any[] = [];
-      if (isLocationQuery) {
-        const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-        if (chunks) {
-          mapsLinks = chunks
-            .filter((c: any) => c.maps)
-            .map((c: any) => ({
-              title: c.maps.title || "View on Google Maps",
-              uri: c.maps.uri
-            }));
-        }
-      }
-
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        text: response.text || "I found some details about that location.", 
-        metadata: mapsLinks.length > 0 ? { mapsLinks } : undefined
+        text: "AI features are currently being configured. For now, please refer to the dashboard navigation or contact support."
       }]);
     } catch (e) {
       console.error(e);

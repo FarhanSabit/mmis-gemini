@@ -9,9 +9,9 @@ import {
   Image as ImageIcon, Trash2, Smartphone
 } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
-import { Card } from '../ui/Card';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
+import { Card } from '../ui/card';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
 import { Ticket, UserProfile } from '../../types';
 
 export const TicketingSystem = ({ user }: { user: UserProfile }) => {
@@ -70,13 +70,10 @@ export const TicketingSystem = ({ user }: { user: UserProfile }) => {
   const getAiInsights = async (ticket: Ticket) => {
     setLoadingAi(true);
     setAiSummary('');
+    // TODO: AI features temporarily disabled - requires server-side API route
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Analyze this market support ticket. ${ticket.attachmentUrl ? 'There is a photo attached for visual evidence.' : ''} Ticket: ${ticket.title} - ${ticket.description}`
-      });
-      setAiSummary(response.text || 'Analysis node complete. Manual verification required.');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setAiSummary('AI diagnostic features are being configured. Manual review recommended for now.');
     } catch (e) {
       setAiSummary('AI insights temporarily disconnected.');
     }

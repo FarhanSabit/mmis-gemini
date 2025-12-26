@@ -34,7 +34,7 @@ export async function signupAction(prevState: any, formData: FormData) {
 
   try {
 
-    const response = await fetch(`${process.env.BACKEND_API_URL}/api/auth/register-vendor`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/register-vendor`, {
 
       method: "POST",
 

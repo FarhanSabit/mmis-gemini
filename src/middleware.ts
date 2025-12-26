@@ -6,7 +6,7 @@ import { getSession } from '@/services/auth.service';
  */
 async function logAction(userId: string, action: string, metadata: object, ip: string) {
   try {
-    await fetch(`${process.env.BACKEND_API_URL}/api/audit-logs`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/audit-logs`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -19,13 +19,13 @@ async function logAction(userId: string, action: string, metadata: object, ip: s
   }
 }
 
-export default async function proxy(req: NextRequest) {
+export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ip = req.headers.get('x-forwarded-for') || '0.0.0.0';
 
   // 1. Skip Public Assets and Authentication Routes
   const publicRoutes = ['/login', '/signup', '/', '/verify-email'];
-  if (publicRoutes.includes(pathname) || pathname.startsWith('/_next')) {
+  if (publicRoutes.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/api')) {
     return NextResponse.next();
   }
 
@@ -65,12 +65,11 @@ export default async function proxy(req: NextRequest) {
   }
 
   // C. Portal Protection: Explicitly block cross-role access to /dashboard
-  // (Assuming /dashboard is the shared entry point for approved Market/Vendor roles)
   if (pathname === '/dashboard' && needsOnboarding) {
     return NextResponse.redirect(new URL('/apply-access', req.url));
   }
 
-  // D. Admin-Specific Portal Protection (if you have sub-routes like /market-admin/settings)
+  // D. Admin-Specific Portal Protection
   if (pathname.startsWith('/market-admin') && !isApprovedAdmin) {
     await logAction(session.id, "UNAUTHORIZED_ADMIN_ACCESS_ATTEMPT", { pathname }, ip);
     return NextResponse.redirect(new URL('/apply-access', req.url));

@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Search, Building2, Info, ExternalLink, Globe, Layers, Map as MapIcon, Compass } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
-import { Card } from '../ui/Card';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
+import { Card } from '../ui/card';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
 import { Market, UserProfile } from '../../types';
 import { MOCK_MARKETS } from '../../constants';
 
@@ -23,22 +23,12 @@ export const InteractiveMap = ({ user, initialMarketId }: InteractiveMapProps) =
 
   const fetchMarketGrounding = async (marketName: string) => {
     setLoading(true);
+    // TODO: AI features temporarily disabled - requires server-side API route
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: `Find the exact address, location details, and nearby landmarks for ${marketName} in Uganda.`,
-        config: {
-          tools: [{ googleMaps: {} }],
-        },
-      });
-
-      const grounding = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      const mapLink = grounding?.find((c: any) => c.maps?.uri)?.maps?.uri;
-      
+      await new Promise(resolve => setTimeout(resolve, 500));
       setMapDetails({
-        description: response.text,
-        uri: mapLink || `https://www.google.com/maps/search/${encodeURIComponent(marketName + ' Uganda')}`,
+        description: `${marketName} is a major commercial hub in Uganda. AI-powered location grounding is being configured.`,
+        uri: `https://www.google.com/maps/search/${encodeURIComponent(marketName + ' Uganda')}`,
       });
     } catch (error) {
       console.error("Grounding error:", error);

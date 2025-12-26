@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       {
         // Any request sent to /api/proxy/xyz is forwarded to your Backend
         source: "/api/proxy/:path*",
-        destination: `${process.env.BACKEND_API_URL}/api/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/:path*`,
       },
     ];
   },

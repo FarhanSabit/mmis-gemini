@@ -27,7 +27,7 @@ export async function getSession() {
 
 
     // 2. Internal fetch to the Express Backend (BFF)
-    const res = await fetch(`${process.env.BACKEND_API_URL}/api/auth/me`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/me`, {
       method: 'GET',
       headers: { 
         Authorization: `Bearer ${token}`,

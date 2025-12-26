@@ -16,7 +16,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
   try {
     // Proxying to our Express Backend via the BFF layer
-    const response = await fetch(`${process.env.BACKEND_API_URL}/api/auth/login`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(validated.data),

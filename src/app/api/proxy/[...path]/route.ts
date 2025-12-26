@@ -1,7 +1,7 @@
 // The BFF Proxy Route (Catch-all): src/app/api/proxy/[...path]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_API_URL;
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function POST(req: NextRequest, { params }: { params: { path: string[] } }) {
   const path = (await params).path.join('/');
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest, { params }: { params: { path: strin
   // Centralized Audit Logging before proxying
   console.info(`[Audit Log] ${req.method} request to ${path} by User`);
 
-  const response = await fetch(`${BACKEND_URL}/api/${path}`, {
+  const response = await fetch(`${BACKEND_URL}/${path}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { path: string
   // Centralized Audit Logging before proxying
   console.info(`[Audit Log] ${req.method} request to ${path} by User`);
 
-  const response = await fetch(`${BACKEND_URL}/api/${path}`, {
+  const response = await fetch(`${BACKEND_URL}/${path}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export async function PUT(req: NextRequest, { params }: { params: { path: string
   // Centralized Audit Logging before proxying
   console.info(`[Audit Log] ${req.method} request to ${path} by User`);
 
-  const response = await fetch(`${BACKEND_URL}/api/${path}`, {
+  const response = await fetch(`${BACKEND_URL}/${path}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { path: str
   // Centralized Audit Logging before proxying
   console.info(`[Audit Log] ${req.method} request to ${path} by User`);
 
-  const response = await fetch(`${BACKEND_URL}/api/${path}`, {
+  const response = await fetch(`${BACKEND_URL}/${path}`, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
